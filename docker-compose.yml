@@ -1,0 +1,48 @@
+services:
+  proxy:
+    image: nginx:stable-alpine
+    container_name: final_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - final_network
+    restart: unless-stopped
+
+  app:
+    image: python:3.12-alpine
+    container_name: final_app
+    working_dir: /app
+    command: python -m http.server 8000
+    volumes:
+      - ./app:/app:ro
+    expose:
+      - "8000"
+    networks:
+      - final_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: final_db
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - final_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  final_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
