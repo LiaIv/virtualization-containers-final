@@ -336,3 +336,98 @@ docker compose down -v
 ```
 
 В обычной проверке `docker compose down -v` лучше не использовать, потому что он удаляет volume с данными PostgreSQL.
+
+## Дополнительная проверка по критериям
+
+Ниже я отдельно оставила команды, которые проверяют основные пункты из критериев задания.
+
+Проверка количества CPU:
+
+```bash
+nproc
+```
+
+Вывод:
+
+```text
+2
+```
+
+Проверка памяти:
+
+```bash
+free -h
+```
+
+Вывод:
+
+```text
+               всего        занят        своб      общая  буф/врем.   доступно
+Память:        3,3Gi       1,4Gi       162Mi        37Mi       2,0Gi       1,9Gi
+Подкачка:      3,2Gi          0B       3,2Gi
+```
+
+Проверка IP-адреса VM:
+
+```bash
+ip a
+```
+
+Основной сетевой интерфейс VM:
+
+```text
+2: enp2s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:0c:29:db:d6:a3 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.24.130/24 brd 172.16.24.255 scope global dynamic noprefixroute enp2s0
+       valid_lft 1183sec preferred_lft 1183sec
+    inet6 fe80::20c:29ff:fedb:d6a3/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+```
+
+Проверка запуска compose-проекта:
+
+```bash
+docker compose up -d
+```
+
+Вывод:
+
+```text
+[+] Running 3/3
+ ✔ Container final_app    Running
+ ✔ Container final_db     Running
+ ✔ Container final_proxy  Running
+```
+
+Проверка контейнеров:
+
+```bash
+docker compose ps
+```
+
+Вывод:
+
+```text
+NAME          IMAGE                 COMMAND                  SERVICE   CREATED                  STATUS                            PORTS
+final_app     python:3.12-alpine    "python -m http.serv…"   app       Less than a second ago   Up Less than a second             8000/tcp
+final_db      postgres:16-alpine    "docker-entrypoint.s…"   db        Less than a second ago   Up Less than a second (healthy)   5432/tcp
+final_proxy   nginx:stable-alpine   "/docker-entrypoint.…"   proxy     Less than a second ago   Up Less than a second             0.0.0.0:80->80/tcp, [::]:80->80/tcp
+```
+
+Проверка доступности приложения по HTTP:
+
+```bash
+curl -I http://172.16.24.130/
+```
+
+Вывод:
+
+```text
+HTTP/1.1 200 OK
+Server: nginx/1.30.2
+Date: Mon, 08 Jun 2026 16:42:48 GMT
+Content-Type: text/html
+Content-Length: 1177
+Connection: keep-alive
+Last-Modified: Mon, 08 Jun 2026 18:30:44 GMT
+```
